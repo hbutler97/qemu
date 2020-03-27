@@ -189,31 +189,31 @@ static const MemoryRegionOps hello_io_ops = {
 static void pci_hellodev_init(PCIDevice *pci_dev, Error **errp)
 //static void pci_hellodev_init(DeviceState *qdev, Error **errp)
 {
-    //PCIDevice *pci_dev = (PCIDevice *)qdev;
+  //PCIDevice *pci_dev = (PCIDevice *)qdev;
     //PCIDeviceClass *pc = PCI_DEVICE_GET_CLASS(pci_dev);
     // Error *local_err = NULL;
 
     /* init the internal state of the device */
-    /*PCIHelloDevState *d = PCI_HELLO_DEV(pci_dev);
-    printf("d=%lu\n", (unsigned long) &d);
-    d->dma_size = 0x1ffff * sizeof(char);
-    d->dma_buf = malloc(d->dma_size);
-    d->id = 0x1337;
-    d->threw_irq = 0;
-    uint8_t *pci_conf;
-    */
+  //  PCIHelloDevState *d = PCI_HELLO_DEV(pci_dev);
+  //  printf("d=%lu\n", (unsigned long) &d);
+  //  d->dma_size = 0x1ffff * sizeof(char);
+  //  d->dma_buf = malloc(d->dma_size);
+  //  d->id = 0x1337;
+  //  d->threw_irq = 0;
+  //  uint8_t *pci_conf;
+    
     /* create the memory region representing the MMIO and PIO 
      * of the device
      */
-    // hello_io_setup(d);
+  // hello_io_setup(d);
     /*
      * See linux device driver (Edition 3) for the definition of a bar
      * in the PCI bus.
      */
-    //pci_register_bar(pci_dev, 0, PCI_BASE_ADDRESS_SPACE_IO, &d->io);
-    //pci_register_bar(pci_dev, 1, PCI_BASE_ADDRESS_SPACE_MEMORY, &d->mmio);
+  // pci_register_bar(pci_dev, 0, PCI_BASE_ADDRESS_SPACE_IO, &d->io);
+  // pci_register_bar(pci_dev, 1, PCI_BASE_ADDRESS_SPACE_MEMORY, &d->mmio);
 
-    //pci_conf = pci_dev->config;
+  //pci_conf = pci_dev->config;
     /* also in ldd, a pci device has 4 pin for interrupt
      * here we use pin B.
      */
@@ -231,39 +231,57 @@ static void pci_hellodev_init(PCIDevice *pci_dev, Error **errp)
  */
 static void pci_hellodev_uninit(PCIDevice *dev)
 {
-    PCIHelloDevState *d = (PCIHelloDevState *) dev;
-    free(d->dma_buf);
-    printf("Good bye World unloaded\n");
+  PCIHelloDevState *d = (PCIHelloDevState *) dev;
+  free(d->dma_buf);
+  printf("Good bye World unloaded\n");
 }
 
-/*static void qdev_pci_hellodev_reset(DeviceState *dev)
+static void qdev_pci_hellodev_reset(DeviceState *dev)
 {
     printf("Reset World\n");
-    }*/
+}
 
 /*
  * TODO
  */
-//static Property hello_properties[] = {
+static Property hello_properties[] = {
 
-//  DEFINE_PROP_END_OF_LIST(),
-//};
+  DEFINE_PROP_END_OF_LIST(),
+};
 
 /* Called when the device is defined
  * PCI configuration is defined here
  * We inherit from PCIDeviceClass
  * Also see ldd for the meaning of the different args
  */
+static uint32_t my_pci_read_config(PCIDevice *pdev, uint32_t addr, int len)
+{
+  printf("read config\n");
+  return 0;
+}
+static void my_pci_write_config(PCIDevice *pdev, uint32_t addr, uint32_t val, int len)
+{
+  printf("write config\n");
+}
 static void pci_hellodev_class_init(ObjectClass *klass, void *data)
 {
-    PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);
-    k->realize = pci_hellodev_init;
-    k->exit = pci_hellodev_uninit;
-    /* this identify our device */
-    k->vendor_id = 0x1337;
-    k->device_id = 0x0001;
-    k->class_id = PCI_CLASS_OTHERS;
-    k->revision  = 0x00;
+  DeviceClass *dc = DEVICE_CLASS(klass);
+  PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);
+
+  dc->desc = "PCI Hello World";
+  set_bit(DEVICE_CATEGORY_MISC, dc->categories);
+  dc->reset = qdev_pci_hellodev_reset;
+  device_class_set_props(dc, hello_properties);
+  k->realize = pci_hellodev_init;
+  k->exit = pci_hellodev_uninit;
+  k->config_read =  my_pci_read_config;
+  k->config_write = my_pci_write_config;
+  
+  /* this identify our device */
+  k->vendor_id = 0x1337;
+  k->device_id = 0x0001;
+  k->class_id = PCI_CLASS_OTHERS;
+  k->revision  = 0x00;
 }
 
 /* Contains all the informations of the device
@@ -286,17 +304,10 @@ static const TypeInfo pci_hello_info = {
  * it will define our device
  */
 
-/*
-static const TypeInfo my_pci_interface_info = {
-    .name          = INTERFACE_CONVENTIONAL_PCI_DEVICE,
-    .parent        = TYPE_INTERFACE,
-    };*/
+
 static void pci_hello_register_types(void) 
 {
     type_register_static(&pci_hello_info);
-    //type_register_static(&conventional_pci_interface_info);
-    //type_register_static(&pcie_interface_info);
-    //  type_register_static(&my_pci_interface_info);
 }
 
 /* macro actually defining our device and registering it in qemu*/
