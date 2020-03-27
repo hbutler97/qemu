@@ -257,11 +257,12 @@ static Property hello_properties[] = {
 static uint32_t my_pci_read_config(PCIDevice *pdev, uint32_t addr, int len)
 {
   printf("read config\n");
-  return 0;
+  return pci_default_read_config(pdev, addr, len);
 }
 static void my_pci_write_config(PCIDevice *pdev, uint32_t addr, uint32_t val, int len)
 {
   printf("write config\n");
+  pci_default_write_config(pdev, addr, val, len);
 }
 static void pci_hellodev_class_init(ObjectClass *klass, void *data)
 {
